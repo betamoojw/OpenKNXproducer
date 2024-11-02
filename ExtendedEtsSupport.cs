@@ -34,11 +34,13 @@ static class ExtendedEtsSupport
     {
         XmlNode lModuleSelector = iInclude.CreateElement("ParameterType", "Id", "%AID%_PT-ModuleSelector", "Name", "ModuleSelector");
         XmlNode lTypeRestriction = iInclude.CreateElement("TypeRestriction", "Base", "Value", "SizeInBit", "8");
-        lTypeRestriction.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Bitte wählen...", "Value", "255", "Id", "%ENID%"));
+        // lTypeRestriction.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Bitte wählen...", "Value", "255", "Id", "%ENID%"));
+        lTypeRestriction.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Please choose...", "Value", "255", "Id", "%ENID%"));
         XmlNode lModuleSelectorCopy = iInclude.CreateElement("ParameterType", "Id", "%AID%_PT-ModuleSelectorWithChannels", "Name", "ModuleSelectorWithChannels");
         lModuleSelector.AppendChild(lTypeRestriction);
         XmlNode lTypeRestrictionCopy = iInclude.CreateElement("TypeRestriction", "Base", "Value", "SizeInBit", "8");
-        lTypeRestrictionCopy.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Bitte wählen...", "Value", "255", "Id", "%ENID%"));
+        // lTypeRestrictionCopy.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Bitte wählen...", "Value", "255", "Id", "%ENID%"));
+        lTypeRestrictionCopy.AppendChild(iInclude.CreateElement("Enumeration", "Text", "Please choose...", "Value", "255", "Id", "%ENID%"));
         lModuleSelectorCopy.AppendChild(lTypeRestrictionCopy);
         int lCount = 0;
         string lVersionInformation = $"\nvar uctVersionInformation = [0x{iApplicationNumber:X}, 0x{iApplicationVersion:X}];";
