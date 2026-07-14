@@ -23,7 +23,7 @@
       "MacOS": { 
         "FilesAndFolders": {
           "OpenKNXProducer": {
-            "SourcePath": "tools/MacOS/OpenKNXproducer",
+            "SourcePath": "tools/MacOS/{ARCH}/OpenKNXproducer",
             "DestinationPath": "/usr/local/bin/OpenKNXproducer"
           }
         },
@@ -32,7 +32,7 @@
       "Linux": {
         "FilesAndFolders": {
           "OpenKNXProducer": {
-            "SourcePath": "tools/Linux/OpenKNXproducer",
+            "SourcePath": "tools/Linux/{ARCH}/OpenKNXproducer",
             "DestinationPath": "/usr/local/bin/OpenKNXproducer"
           }
         },
@@ -87,15 +87,15 @@
       "MacOS": {
         "FilesAndFolders": {
           "Bossa_console_bin": {
-            "SourcePath": "tools/bossac/MacOS/bossac",
+            "SourcePath": "tools/bossac/MacOS/x64/bossac",
             "DestinationPath": "/usr/local/bin/bossac"
           },
           "Bossa_consoleh_bin": {
-            "SourcePath": "tools/bossac/MacOS/bossash",
+            "SourcePath": "tools/bossac/MacOS/x64/bossash",
             "DestinationPath": "/usr/local/bin/bossash"
           },
           "Bossa_App": {
-            "SourcePath": "tools/bossac/MacOS/BOSSA.app",
+            "SourcePath": "tools/bossac/MacOS/x64/BOSSA.app",
             "DestinationPath": "$env:HOME/Applications/Bossa.app",
             "CopyEntireFolder": true
             
@@ -105,13 +105,13 @@
             "DestinationPath": "/usr/local/bin/Bossa_License.txt"
           }
         },
-        "ExecuteCommand1": "chmod +x /usr/local/bin/bossac",
-        "ExecuteCommand2": "chmod +x /usr/local/bin/bossash"
+        "ExecuteCommand1": "if (Test-Path /usr/local/bin/bossac) { chmod +x /usr/local/bin/bossac }",
+        "ExecuteCommand2": "if (Test-Path /usr/local/bin/bossash) { chmod +x /usr/local/bin/bossash }"
       },
       "Linux": {
         "FilesAndFolders": {
           "Bossa_console_bin": {
-            "SourcePath": "tools/bossac/MacOS/bossac",
+            "SourcePath": "tools/bossac/Linux/bossac",
             "DestinationPath": "/usr/local/bin/bossac"
           },
           "Bossa_license": {
@@ -141,6 +141,36 @@
             "esptools_license": {
               "SourcePath": "tools\\esptools\\LICENSE",
               "DestinationPath": "$env:USERPROFILE\\bin\\esptools\\LICENSE"
+            }
+          }
+        }
+      },
+      "MacOS": {
+        "EnsureTools": {
+          "esptool": {
+            "CheckCommands": [ "esptool.py", "esptool" ],
+            "PipPackage": "esptool"
+          },
+          "espota": {
+            "CheckCommands": [ "espota.py", "espota" ],
+            "BundledFile": {
+              "SourcePath": "tools/esptools/espota.py",
+              "DestinationPath": "$env:HOME/.local/bin/espota.py"
+            }
+          }
+        }
+      },
+      "Linux": {
+        "EnsureTools": {
+          "esptool": {
+            "CheckCommands": [ "esptool.py", "esptool" ],
+            "PipPackage": "esptool"
+          },
+          "espota": {
+            "CheckCommands": [ "espota.py", "espota" ],
+            "BundledFile": {
+              "SourcePath": "tools/esptools/espota.py",
+              "DestinationPath": "$env:HOME/.local/bin/espota.py"
             }
           }
         }
