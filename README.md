@@ -76,7 +76,7 @@ This project uses **.NET 6.0**.
 
 ### 1. Download and Extract the ZIP file
 
-Download the latest release and extract the entire contents of the ZIP file into a directory.
+[Download the latest release](https://github.com/OpenKNX/OpenKNXproducer/releases) and extract the entire contents of the ZIP file into a directory.
 
 ### 2. Run the installation script
 
