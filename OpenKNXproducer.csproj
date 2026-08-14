@@ -28,9 +28,7 @@
     <!-- <Nullable>enable</Nullable> -->
     <!-- No git hash in the version info -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <!-- VersionPrefix (not Version) so a suffix can be added at build time:
-         dotnet ... /p:VersionSuffix=beta  ->  4.3.10-beta -->
-    <VersionPrefix>4.3.10</VersionPrefix>
+    <Version>4.3.12</Version>
     <!-- <PublishTrimmed>false</PublishTrimmed> -->
     <PublishReadyToRun>true</PublishReadyToRun>
     <PublishSingleFile>true</PublishSingleFile>

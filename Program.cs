@@ -235,6 +235,23 @@ namespace OpenKNXproducer
                 lComObjectRefRef.Attributes.GetNamedItem("RefId").Value = lNewRefId;
             }
             Console.WriteLine("OK");
+            if (lSuccess)
+            {
+                Console.Write("Removing Read-On-Init-Flag for all KO... ");
+                foreach (XmlNode lComObject in lComObjects)
+                {
+                    XmlNode lAttribute = lComObject.Attributes.GetNamedItem("ReadOnInitFlagLocked");
+                    if (lAttribute == null)
+                    {
+                        lAttribute = iInclude.GetDocument().CreateAttribute("ReadOnInitFlagLocked");
+                        lAttribute.Value = "true";
+                        XmlNode lPositionAttribute = lComObject.Attributes.GetNamedItem("ReadOnInitFlag");
+                        lComObject.Attributes.InsertAfter((XmlAttribute)lAttribute, (XmlAttribute)lPositionAttribute);
+                    }
+                }
+                Console.WriteLine("OK");
+            }
+            
             return lSuccess;
         }
 
