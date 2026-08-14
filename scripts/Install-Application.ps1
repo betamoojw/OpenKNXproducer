@@ -143,6 +143,12 @@ function Copy-ApplicationFiles {
         if($Verbose) { Write-Host "Processing - ExecuteCommand: of $currentOS $($currentOS_x86x64)" -ForegroundColor Yellow }
         Invoke-ExecuteCommands $appSettings
 
+        # Ensure external system tools on mac/linux (e.g. esptool/espota):
+        # check the system first, and only install into user space (pipx/pip --user) after consent.
+        if (-not $Uninstall -and $currentOS -in @("MacOS", "Linux") -and $appSettings.EnsureTools) {
+          Ensure-SystemTools $appSettings.EnsureTools
+        }
+
         # Process the common settings for Windows - x86 and x64
         # Process common settings for Windows - x86 and x64
         if ($currentOS -eq "Windows" -and $currentOS_x86x64 -in @("x86", "x64")) {
@@ -284,6 +290,17 @@ function IntallFilesAndFolders {
     # Process each file and folder
     foreach ($fileOrFolderName in $settings.FilesAndFolders.PSObject.Properties.Name) {
       $fileOrFolder = $settings.FilesAndFolders.$fileOrFolderName
+      # macOS/Linux: pick the native-architecture binary (arm64 vs x64)
+      $archTemplated = $fileOrFolder.SourcePath -match '\{ARCH\}'
+      if ($archTemplated) {
+        $lArch = if ((uname -m) -in @('arm64', 'aarch64')) { 'arm64' } else { 'x64' }
+        $fileOrFolder.SourcePath = $fileOrFolder.SourcePath -replace '\{ARCH\}', $lArch
+      }
+      # tool has no build for this architecture -> skip instead of failing
+      if ($archTemplated -and -not (Test-Path -Path $fileOrFolder.SourcePath)) {
+        Write-Host "- Skipping '$fileOrFolderName' for $appName (no build for this architecture)." -ForegroundColor Yellow
+        continue
+      }
       # If CopyEntireFolder is specified, copy the entire folder
       if ($fileOrFolder.CopyEntireFolder) {
         #Check if the source folder exists
@@ -329,6 +346,87 @@ function IntallFilesAndFolders {
   }
 }
 
+
+# Return $true if any of the given command names is resolvable on PATH.
+function Test-CommandExists {
+  param ( [string[]]$names )
+  foreach ($n in $names) {
+    if (Get-Command $n -ErrorAction SilentlyContinue) { return $true }
+  }
+  return $false
+}
+
+# Install a python package strictly in user space: prefer pipx (isolated),
+# fall back to pip --user, then pip --user --break-system-packages (PEP 668).
+function Install-PipPackageUserSpace {
+  param ( [string]$package )
+
+  if (Get-Command pipx -ErrorAction SilentlyContinue) {
+    Write-Host "- Installing '$package' via pipx (user space) ..." -ForegroundColor Green
+    & pipx install $package
+    return ($LASTEXITCODE -eq 0)
+  }
+
+  $pip = if (Get-Command pip3 -ErrorAction SilentlyContinue) { 'pip3' }
+         elseif (Get-Command pip -ErrorAction SilentlyContinue) { 'pip' }
+         else { $null }
+  if (-not $pip) {
+    Write-Host "- Neither pipx nor pip found. Please install Python/pip first, then: pipx install $package" -ForegroundColor Yellow
+    return $false
+  }
+
+  Write-Host "- Installing '$package' via $pip --user (user space) ..." -ForegroundColor Green
+  & $pip install --user $package
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "- Retry with --user --break-system-packages (PEP 668) ..." -ForegroundColor Yellow
+    & $pip install --user --break-system-packages $package
+  }
+  return ($LASTEXITCODE -eq 0)
+}
+
+# Ensure external tools exist on mac/linux. For each tool:
+#   1. if already on PATH -> skip (respect brew/apt/pip installs)
+#   2. else if BundledFile -> copy the shipped script into user space (fallback)
+#   3. else if PipPackage  -> ask for consent, then install in user space
+function Ensure-SystemTools {
+  param ( [object]$ensureSettings )
+  if ([string]::IsNullOrEmpty($ensureSettings)) { return }
+
+  foreach ($toolName in $ensureSettings.PSObject.Properties.Name) {
+    $tool = $ensureSettings.$toolName
+
+    if ($tool.CheckCommands -and (Test-CommandExists $tool.CheckCommands)) {
+      Write-Host "- '$toolName' already available in system. Skipping." -ForegroundColor Green
+      continue
+    }
+
+    if ($tool.BundledFile) {
+      $src = $tool.BundledFile.SourcePath
+      if (Test-Path -Path $src) {
+        $dst = Resolve-EnvVariablesInJson $tool.BundledFile.DestinationPath
+        Ensure-ParentDirectoriesExist $dst
+        Copy-Item -Path $src -Destination $dst -Force -ErrorAction Stop
+        Start-Process chmod -ArgumentList "+x", $dst -NoNewWindow -Wait -ErrorAction SilentlyContinue
+        Write-Host "- Installed bundled '$toolName' to '$dst'." -ForegroundColor Green
+      } else {
+        Write-Host "- '$toolName' not in system and no bundled file present ('$src'). Skipping." -ForegroundColor Yellow
+      }
+      continue
+    }
+
+    if ($tool.PipPackage) {
+      $answer = Read-Host "  '$toolName' not found. Install '$($tool.PipPackage)' in user space (pipx/pip --user)? (y/n)"
+      if ($answer -eq 'y') {
+        $ok = Install-PipPackageUserSpace $tool.PipPackage
+        if (-not $ok) {
+          Write-Host "- Could not install '$toolName' automatically. Install manually: pipx install $($tool.PipPackage)" -ForegroundColor Yellow
+        }
+      } else {
+        Write-Host "- Skipped '$toolName'. Install anytime: pipx install $($tool.PipPackage)" -ForegroundColor Yellow
+      }
+    }
+  }
+}
 
 # Example usage
 #OpenKNX_ShowLogo -AddCustomText "$(('Removing', 'Installing')[!$Uninstall]) OpenKNXproducer Tools" -Line 0
